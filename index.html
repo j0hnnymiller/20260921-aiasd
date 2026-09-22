@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="app-title">
+        <aside class="sidebar" aria-label="Task overview">
+          <div>
+            <p class="eyebrow">Today</p>
+            <h1 id="app-title">TODO List Manager</h1>
+          </div>
+
+          <div class="metric-grid" aria-label="Task statistics">
+            <div class="metric">
+              <span id="total-count">0</span>
+              <small>Total</small>
+            </div>
+            <div class="metric">
+              <span id="open-count">0</span>
+              <small>Open</small>
+            </div>
+            <div class="metric">
+              <span id="done-count">0</span>
+              <small>Done</small>
+            </div>
+          </div>
+
+          <form id="task-form" class="task-form" autocomplete="off">
+            <label for="task-title">Task</label>
+            <input
+              id="task-title"
+              name="title"
+              type="text"
+              maxlength="90"
+              placeholder="Add a task"
+              required
+            />
+
+            <label for="task-description">Description</label>
+            <textarea
+              id="task-description"
+              name="description"
+              maxlength="240"
+              placeholder="Add details"
+              rows="3"
+            ></textarea>
+
+            <label>
+              Priority
+              <select name="priority" aria-label="Priority">
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+
+            <div class="form-row">
+              <label>
+                Due
+                <input
+                  id="task-due-date"
+                  name="dueDate"
+                  type="date"
+                  aria-label="Due date"
+                  aria-describedby="date-error"
+                />
+              </label>
+              <label>
+                Start time
+                <input
+                  id="task-start-time"
+                  name="startTime"
+                  type="time"
+                  aria-label="Start time"
+                />
+              </label>
+            </div>
+
+            <p id="date-error" class="form-message" aria-live="polite"></p>
+
+            <button type="submit" class="primary-action">Add Task</button>
+          </form>
+        </aside>
+
+        <section class="task-panel" aria-label="Tasks">
+          <div class="toolbar">
+            <div class="search-wrap">
+              <span aria-hidden="true">⌕</span>
+              <input
+                id="search-input"
+                type="search"
+                placeholder="Search tasks"
+                aria-label="Search tasks"
+              />
+            </div>
+
+            <div class="filter-tabs" role="tablist" aria-label="Task filters">
+              <button
+                type="button"
+                class="filter-button active"
+                data-filter="all"
+                role="tab"
+                aria-selected="true"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                class="filter-button"
+                data-filter="open"
+                role="tab"
+                aria-selected="false"
+              >
+                Open
+              </button>
+              <button
+                type="button"
+                class="filter-button"
+                data-filter="done"
+                role="tab"
+                aria-selected="false"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+
+          <div class="bulk-actions" aria-label="Bulk actions">
+            <button type="button" id="clear-completed">Clear Done</button>
+            <button type="button" id="complete-all">Complete All</button>
+          </div>
+
+          <ul id="task-list" class="task-list" aria-live="polite"></ul>
+
+          <template id="empty-template">
+            <li class="empty-state">
+              <div class="empty-visual" aria-hidden="true"></div>
+              <h2>No tasks here</h2>
+              <p>
+                Your list will appear as soon as there is something to track.
+              </p>
+            </li>
+          </template>
+        </section>
+      </section>
+    </main>
+
+    <div
+      id="toast-container"
+      class="toast-container"
+      aria-live="polite"
+      aria-label="Task notifications"
+    ></div>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>
