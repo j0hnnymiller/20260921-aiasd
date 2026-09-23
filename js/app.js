@@ -207,9 +207,16 @@ function getVisibleTasks() {
     });
 }
 
+/**
+ * Updates the summary counters shown at the top of the task list.
+ * These values reflect the total number of tasks, how many are complete,
+ * and how many are still open based on the current in-memory task collection.
+ */
 function renderStats() {
+  // Count how many tasks are marked as completed in the current list.
   const completedTasks = tasks.filter((task) => task.completed).length;
 
+  // Update the task summary widgets in the UI.
   totalCount.textContent = tasks.length;
   doneCount.textContent = completedTasks;
   openCount.textContent = tasks.length - completedTasks;
@@ -242,7 +249,19 @@ function createTaskElement(task) {
 
   const meta = document.createElement("div");
   meta.className = "task-meta";
-  meta.innerHTML = `<span>${task.priority}</span><span>${formatDate(task.dueDate)}</span><span>${task.startTime ? `Starts ${formatTime(task.startTime)}` : "No start time"}</span>`;
+
+  const prioritySpan = document.createElement("span");
+  prioritySpan.textContent = task.priority;
+
+  const dueDateSpan = document.createElement("span");
+  dueDateSpan.textContent = formatDate(task.dueDate);
+
+  const startTimeSpan = document.createElement("span");
+  startTimeSpan.textContent = task.startTime
+    ? `Starts ${formatTime(task.startTime)}`
+    : "No start time";
+
+  meta.append(prioritySpan, dueDateSpan, startTimeSpan);
 
   const actions = document.createElement("div");
   actions.className = "task-actions";

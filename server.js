@@ -93,11 +93,15 @@ function normalizeTask(row) {
   };
 }
 
+const ALLOWED_PRIORITIES = new Set(["low", "medium", "high"]);
+
 function normalizeTaskInput(input, fallback = {}) {
+  const requestedPriority = String(input.priority ?? fallback.priority ?? "medium");
+
   return {
     title: String(input.title ?? fallback.title ?? "").trim(),
     description: String(input.description ?? fallback.description ?? "").trim(),
-    priority: String(input.priority ?? fallback.priority ?? "medium"),
+    priority: ALLOWED_PRIORITIES.has(requestedPriority) ? requestedPriority : "medium",
     dueDate: String(input.dueDate ?? fallback.dueDate ?? ""),
     startTime: String(input.startTime ?? fallback.startTime ?? ""),
     completed: Boolean(input.completed ?? fallback.completed ?? false),
@@ -116,7 +120,15 @@ function getTaskOr404(response, id) {
 }
 
 app.use(express.json());
-app.use(express.static(__dirname));
+// Serve only the known front-end assets instead of the whole repo root,
+// to avoid exposing server.js, package.json, and data/tasks.sqlite over HTTP.
+app.get("/", (request, response) => {
+  response.sendFile(path.join(__dirname, "index.html"));
+});
+app.get("/styles.css", (request, response) => {
+  response.sendFile(path.join(__dirname, "styles.css"));
+});
+app.use("/js", express.static(path.join(__dirname, "js")));
 
 app.get("/api/tasks", (request, response) => {
   response.json(selectTasks.all().map(normalizeTask));

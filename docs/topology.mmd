@@ -1,0 +1,19 @@
+graph TD
+    Browser["Web browser<br/>index.html + styles.css"]
+    Client["Client application<br/>js/app.js<br/>state, rendering, filters, reminders"]
+    Server["Node.js process<br/>server.js<br/>Express + static file server"]
+    Api["JSON API<br/>/api/tasks"]
+    Sqlite["SQLite database<br/>data/tasks.sqlite<br/>WAL mode"]
+    Wal["SQLite WAL files<br/>tasks.sqlite-wal<br/>tasks.sqlite-shm"]
+
+    Browser -->|loads HTML, CSS, and JS| Server
+    Browser -->|user interaction| Client
+    Client -->|fetch JSON over HTTP| Api
+    Api -->|queries and mutations| Sqlite
+    Sqlite -->|maintains write-ahead log| Wal
+    style Browser fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    style Client fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    style Server fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f
+    style Api fill:#fce7f3,stroke:#db2777,stroke-width:2px,color:#831843
+    style Sqlite fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#4c1d95
+    style Wal fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d

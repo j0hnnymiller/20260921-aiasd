@@ -1,0 +1,12 @@
+RecordType	ID	ShapeType	Text	From	To	ConnectorLabel
+Node	Browser	Process	Web browser; index.html + styles.css
+Node	Client	Process	Client application; js/app.js; state, rendering, filters, reminders
+Node	Server	Process	Node.js process; server.js; Express + static file server
+Node	Api	Process	JSON API; /api/tasks
+Node	Sqlite	Database	SQLite database; data/tasks.sqlite; WAL mode
+Node	Wal	Data Store	SQLite WAL files; tasks.sqlite-wal; tasks.sqlite-shm
+Connector		Dynamic connector		Browser	Server	loads HTML, CSS, and JS
+Connector		Dynamic connector		Browser	Client	user interaction
+Connector		Dynamic connector		Client	Api	fetch JSON over HTTP
+Connector		Dynamic connector		Api	Sqlite	queries and mutations
+Connector		Dynamic connector		Sqlite	Wal	maintains write-ahead log
