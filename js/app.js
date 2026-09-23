@@ -202,7 +202,7 @@ function getVisibleTasks() {
       return true;
     })
     .filter((task) => {
-      const searchableText = `${task.title} ${task.description ?? ""} ${task.startTime ?? ""}`;
+      const searchableText = `${task.title} ${task.description ?? ""} ${task.startTime ?? ""} ${task.assignedTo ?? ""}`;
       return searchableText.toLowerCase().includes(query);
     });
 }
@@ -263,6 +263,12 @@ function createTaskElement(task) {
 
   meta.append(prioritySpan, dueDateSpan, startTimeSpan);
 
+  if (task.assignedTo) {
+    const assigneeSpan = document.createElement("span");
+    assigneeSpan.textContent = `Assigned to ${task.assignedTo}`;
+    meta.append(assigneeSpan);
+  }
+
   const actions = document.createElement("div");
   actions.className = "task-actions";
 
@@ -314,6 +320,7 @@ async function saveTaskFromForm(formData) {
   const dueDate = formData.get("dueDate");
   const startTime = formData.get("startTime");
   const priority = formData.get("priority");
+  const assignedTo = formData.get("assignedTo").trim();
 
   if (isPastDate(dueDate)) {
     setDateError("Past dates are not allowed. Choose today or a future date.");
@@ -334,6 +341,7 @@ async function saveTaskFromForm(formData) {
       priority,
       dueDate,
       startTime,
+      assignedTo,
     });
     editingTaskId = null;
     submitButton.textContent = "Add Task";
@@ -346,6 +354,7 @@ async function saveTaskFromForm(formData) {
     priority,
     dueDate,
     startTime,
+    assignedTo,
     completed: false,
   });
   return true;
@@ -364,6 +373,7 @@ function editTask(taskId) {
   form.elements.priority.value = task.priority;
   form.elements.dueDate.value = task.dueDate ?? "";
   form.elements.startTime.value = task.startTime ?? "";
+  form.elements.assignedTo.value = task.assignedTo ?? "";
   submitButton.textContent = "Save Task";
   setDateError("");
   form.elements.title.focus();

@@ -7,7 +7,10 @@ const express = require("express");
 
 const app = express();
 const port = process.env.PORT || 3000;
-const dataDirectory = path.join(__dirname, "data");
+// Allow tests to point at an isolated, disposable database directory.
+const dataDirectory = process.env.TASKS_DATA_DIR
+  ? path.resolve(process.env.TASKS_DATA_DIR)
+  : path.join(__dirname, "data");
 const databasePath = path.join(dataDirectory, "tasks.sqlite");
 
 fs.mkdirSync(dataDirectory, { recursive: true });
@@ -27,6 +30,24 @@ database.exec(`
   )
 `);
 
+// Migrate databases created before assignment tracking existed.
+const existingColumns = new Set(
+  database
+    .prepare("PRAGMA table_info(tasks)")
+    .all()
+    .map((column) => column.name),
+);
+if (!existingColumns.has("assigned_to")) {
+  database.exec(
+    "ALTER TABLE tasks ADD COLUMN assigned_to TEXT NOT NULL DEFAULT ''",
+  );
+}
+if (!existingColumns.has("assigned_at")) {
+  database.exec(
+    "ALTER TABLE tasks ADD COLUMN assigned_at TEXT NOT NULL DEFAULT ''",
+  );
+}
+
 const selectTasks = database.prepare(`
   SELECT
     id,
@@ -36,6 +57,8 @@ const selectTasks = database.prepare(`
     due_date AS dueDate,
     start_time AS startTime,
     completed,
+    assigned_to AS assignedTo,
+    assigned_at AS assignedAt,
     created_at AS createdAt
   FROM tasks
   ORDER BY created_at DESC
@@ -50,6 +73,8 @@ const selectTask = database.prepare(`
     due_date AS dueDate,
     start_time AS startTime,
     completed,
+    assigned_to AS assignedTo,
+    assigned_at AS assignedAt,
     created_at AS createdAt
   FROM tasks
   WHERE id = ?
@@ -64,8 +89,10 @@ const insertTask = database.prepare(`
     due_date,
     start_time,
     completed,
+    assigned_to,
+    assigned_at,
     created_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateTask = database.prepare(`
@@ -76,7 +103,9 @@ const updateTask = database.prepare(`
     priority = ?,
     due_date = ?,
     start_time = ?,
-    completed = ?
+    completed = ?,
+    assigned_to = ?,
+    assigned_at = ?
   WHERE id = ?
 `);
 
@@ -96,15 +125,20 @@ function normalizeTask(row) {
 const ALLOWED_PRIORITIES = new Set(["low", "medium", "high"]);
 
 function normalizeTaskInput(input, fallback = {}) {
-  const requestedPriority = String(input.priority ?? fallback.priority ?? "medium");
+  const requestedPriority = String(
+    input.priority ?? fallback.priority ?? "medium",
+  );
 
   return {
     title: String(input.title ?? fallback.title ?? "").trim(),
     description: String(input.description ?? fallback.description ?? "").trim(),
-    priority: ALLOWED_PRIORITIES.has(requestedPriority) ? requestedPriority : "medium",
+    priority: ALLOWED_PRIORITIES.has(requestedPriority)
+      ? requestedPriority
+      : "medium",
     dueDate: String(input.dueDate ?? fallback.dueDate ?? ""),
     startTime: String(input.startTime ?? fallback.startTime ?? ""),
     completed: Boolean(input.completed ?? fallback.completed ?? false),
+    assignedTo: String(input.assignedTo ?? fallback.assignedTo ?? "").trim(),
   };
 }
 
@@ -144,6 +178,7 @@ app.post("/api/tasks", (request, response) => {
 
   const id = crypto.randomUUID();
   const createdAt = new Date().toISOString();
+  const assignedAt = task.assignedTo ? createdAt : "";
 
   insertTask.run(
     id,
@@ -153,6 +188,8 @@ app.post("/api/tasks", (request, response) => {
     task.dueDate,
     task.startTime,
     task.completed ? 1 : 0,
+    task.assignedTo,
+    assignedAt,
     createdAt,
   );
 
@@ -166,12 +203,21 @@ app.put("/api/tasks/:id", (request, response) => {
     return;
   }
 
-  const task = normalizeTaskInput(request.body, existingTask);
+  const requestedTask = normalizeTaskInput(request.body);
 
-  if (!task.title) {
+  if (!requestedTask.title) {
     response.status(400).json({ error: "Title is required" });
     return;
   }
+
+  const task = normalizeTaskInput(request.body, existingTask);
+
+  // Only refresh the assignment timestamp when the assignee actually changes.
+  const assignedAt = !task.assignedTo
+    ? ""
+    : task.assignedTo === existingTask.assignedTo
+      ? existingTask.assignedAt
+      : new Date().toISOString();
 
   updateTask.run(
     task.title,
@@ -180,6 +226,8 @@ app.put("/api/tasks/:id", (request, response) => {
     task.dueDate,
     task.startTime,
     task.completed ? 1 : 0,
+    task.assignedTo,
+    assignedAt,
     request.params.id,
   );
 
@@ -201,7 +249,13 @@ app.delete("/api/tasks/:id", (request, response) => {
   response.sendStatus(204);
 });
 
-app.listen(port, () => {
-  console.log(`Todo List Manager running at http://localhost:${port}`);
-  console.log(`SQLite database: ${databasePath}`);
-});
+module.exports = { app, database };
+
+// Only auto-start the server when run directly (node server.js / npm start),
+// so requiring this module from tests doesn't bind the shared dev port.
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Todo List Manager running at http://localhost:${port}`);
+    console.log(`SQLite database: ${databasePath}`);
+  });
+}
