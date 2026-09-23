@@ -25,7 +25,12 @@ function getAvailablePort() {
 }
 
 async function stopProcess(serverProcess) {
-  if (!serverProcess || serverProcess.killed) {
+  if (
+    !serverProcess ||
+    serverProcess.killed ||
+    serverProcess.exitCode !== null ||
+    serverProcess.signalCode !== null
+  ) {
     return;
   }
 
