@@ -85,7 +85,16 @@ js/app.js    UI state, API calls, filtering, and reminders
 server.js    Express server and SQLite API
 data/        Local SQLite database files
 docs/        Architecture documentation and Mermaid diagrams
+.github/     Workspace customization files and agents
 ```
+
+## Custom agents
+
+- [product-owner.agent.md](.github/agents/product-owner.agent.md) - Product framing, backlog prioritization, user-story drafting, and acceptance-criteria guidance for feature decisions.
+
+## Custom skills
+
+- [stage-and-commit-change](.github/skills/stage-and-commit-change/SKILL.md) - Stage and commit workspace changes in logical, reviewable groups while preserving unrelated work.
 
 ## Architecture
 
