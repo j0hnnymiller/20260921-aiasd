@@ -307,9 +307,15 @@ test("startServer surfaces startup timeout diagnostics and cleans temporary stat
     fs.stat(dataDirectory),
     (error) => error && error.code === "ENOENT",
   );
-  assert.throws(() => {
+  let processCheckError;
+
+  try {
     process.kill(childPid, 0);
-  }, /ESRCH/);
+  } catch (error) {
+    processCheckError = error;
+  }
+
+  assert.equal(processCheckError?.code, "ESRCH");
 });
 
 test("POST /api/tasks/complete-all marks every task as completed", async (t) => {
