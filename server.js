@@ -155,6 +155,10 @@ function calculateNextOccurrenceDate(dateValue, recurrenceType, interval) {
 
   const currentDate = new Date(`${dateValue}T00:00:00`);
 
+  if (Number.isNaN(currentDate.getTime())) {
+    return "";
+  }
+
   switch (recurrenceType) {
     case "daily":
       currentDate.setDate(currentDate.getDate() + safeInterval);
