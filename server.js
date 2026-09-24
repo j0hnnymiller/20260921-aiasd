@@ -31,7 +31,8 @@ database.exec(`
     recurrence_interval INTEGER NOT NULL DEFAULT 1,
     recurrence_end_date TEXT NOT NULL DEFAULT '',
     next_occurrence_at TEXT NOT NULL DEFAULT '',
-    parent_task_id TEXT NOT NULL DEFAULT ''
+    parent_task_id TEXT NOT NULL DEFAULT '',
+    tags TEXT NOT NULL DEFAULT '[]'
   )
 `);
 
@@ -44,6 +45,7 @@ function ensureTaskSchema() {
     ["recurrence_end_date", "TEXT NOT NULL DEFAULT ''"],
     ["next_occurrence_at", "TEXT NOT NULL DEFAULT ''"],
     ["parent_task_id", "TEXT NOT NULL DEFAULT ''"],
+    ["tags", "TEXT NOT NULL DEFAULT '[]'"],
   ];
 
   for (const [columnName, columnDefinition] of columnDefinitions) {
@@ -71,7 +73,8 @@ const selectTasks = database.prepare(`
     recurrence_interval AS recurrenceInterval,
     recurrence_end_date AS recurrenceEndDate,
     next_occurrence_at AS nextOccurrenceAt,
-    parent_task_id AS parentTaskId
+    parent_task_id AS parentTaskId,
+    tags
   FROM tasks
   ORDER BY created_at DESC
 `);
@@ -90,7 +93,8 @@ const selectTask = database.prepare(`
     recurrence_interval AS recurrenceInterval,
     recurrence_end_date AS recurrenceEndDate,
     next_occurrence_at AS nextOccurrenceAt,
-    parent_task_id AS parentTaskId
+    parent_task_id AS parentTaskId,
+    tags
   FROM tasks
   WHERE id = ?
 `);
@@ -109,8 +113,9 @@ const insertTask = database.prepare(`
     recurrence_interval,
     recurrence_end_date,
     next_occurrence_at,
-    parent_task_id
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    parent_task_id,
+    tags
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateTask = database.prepare(`
@@ -126,7 +131,8 @@ const updateTask = database.prepare(`
     recurrence_interval = ?,
     recurrence_end_date = ?,
     next_occurrence_at = ?,
-    parent_task_id = ?
+    parent_task_id = ?,
+    tags = ?
   WHERE id = ?
 `);
 
@@ -243,6 +249,34 @@ function normalizeRecurrenceInput(input = {}, fallback = {}) {
   };
 }
 
+function normalizeTags(input, fallback = []) {
+  const rawTags = input.tags ?? fallback;
+  const tagValues = Array.isArray(rawTags)
+    ? rawTags
+    : String(rawTags ?? "").split(",");
+  const uniqueTags = new Set();
+
+  return tagValues.reduce((tags, value) => {
+    const tag = String(value ?? "").trim().replace(/\s+/g, " ");
+    const tagKey = tag.toLowerCase();
+
+    if (tag && tag.length <= 40 && !uniqueTags.has(tagKey) && tags.length < 10) {
+      uniqueTags.add(tagKey);
+      tags.push(tag);
+    }
+
+    return tags;
+  }, []);
+}
+
+function parseTags(tagsValue) {
+  try {
+    return normalizeTags(JSON.parse(tagsValue ?? "[]"));
+  } catch {
+    return [];
+  }
+}
+
 function normalizeTask(row) {
   return {
     ...row,
@@ -252,6 +286,7 @@ function normalizeTask(row) {
     recurrenceEndDate: row.recurrenceEndDate ?? "",
     nextOccurrenceAt: row.nextOccurrenceAt ?? "",
     parentTaskId: row.parentTaskId ?? "",
+    tags: parseTags(row.tags),
   };
 }
 
@@ -272,6 +307,7 @@ function normalizeTaskInput(input, fallback = {}) {
     dueDate: String(input.dueDate ?? fallback.dueDate ?? ""),
     startTime: String(input.startTime ?? fallback.startTime ?? ""),
     completed: Boolean(input.completed ?? fallback.completed ?? false),
+    tags: normalizeTags(input.tags, fallback.tags),
     ...recurrence,
   };
 }
@@ -308,6 +344,7 @@ function buildNextRecurringTask(task) {
     recurrenceEndDate,
     nextOccurrenceAt: nextDueDate,
     parentTaskId: task.parentTaskId || task.id,
+    tags: task.tags ?? [],
   };
 }
 
@@ -350,6 +387,7 @@ function createNextRecurringOccurrence(task) {
     nextTask.recurrenceEndDate,
     nextTask.nextOccurrenceAt,
     nextTask.parentTaskId,
+    JSON.stringify(nextTask.tags),
   );
 
   return normalizeTask(selectTask.get(nextTaskId));
@@ -395,6 +433,7 @@ app.post("/api/tasks", (request, response) => {
     task.recurrenceEndDate,
     task.nextOccurrenceAt || task.dueDate,
     task.parentTaskId,
+    JSON.stringify(task.tags),
   );
 
   response.status(201).json(normalizeTask(selectTask.get(id)));
@@ -426,6 +465,7 @@ app.put("/api/tasks/:id", (request, response) => {
     task.recurrenceEndDate,
     task.nextOccurrenceAt || task.dueDate,
     task.parentTaskId,
+    JSON.stringify(task.tags),
     request.params.id,
   );
 
@@ -476,4 +516,5 @@ if (require.main === module) {
 module.exports = {
   calculateNextOccurrenceDate,
   normalizeRecurrenceInput,
+  normalizeTags,
 };

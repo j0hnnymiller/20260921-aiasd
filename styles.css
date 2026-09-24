@@ -188,6 +188,12 @@ button:focus-visible {
   font-weight: 700;
 }
 
+.field-help {
+  margin: -8px 0 0;
+  color: rgba(255, 253, 246, 0.8);
+  font-size: 0.78rem;
+}
+
 .task-panel {
   min-width: 0;
   padding: clamp(22px, 4vw, 42px);
@@ -198,7 +204,7 @@ button:focus-visible {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
   gap: 14px;
   align-items: center;
 }
@@ -227,6 +233,17 @@ button:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.tag-filter-label {
+  min-width: 130px;
+  color: var(--muted);
+}
+
+.tag-filter-label select {
+  min-height: 40px;
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.66);
 }
 
 .filter-button,
@@ -320,6 +337,11 @@ button:focus-visible {
   padding: 4px 8px;
   border-radius: 999px;
   background: rgba(13, 124, 102, 0.08);
+}
+
+.task-meta .task-tag {
+  color: var(--accent-dark);
+  background: rgba(131, 169, 92, 0.2);
 }
 
 .task-actions {

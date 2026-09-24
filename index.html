@@ -56,6 +56,19 @@
               rows="3"
             ></textarea>
 
+            <label for="task-tags">
+              Tags
+              <input
+                id="task-tags"
+                name="tags"
+                type="text"
+                maxlength="409"
+                placeholder="work, home, errands"
+                aria-describedby="tag-help"
+              />
+            </label>
+            <small id="tag-help" class="field-help">Separate tags with commas.</small>
+
             <label>
               Priority
               <select name="priority" aria-label="Priority">
@@ -167,6 +180,13 @@
                 Done
               </button>
             </div>
+
+            <label class="tag-filter-label" for="tag-filter">
+              Tag
+              <select id="tag-filter" aria-label="Filter tasks by tag">
+                <option value="">All tags</option>
+              </select>
+            </label>
           </div>
 
           <div class="bulk-actions" aria-label="Bulk actions">

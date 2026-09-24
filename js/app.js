@@ -5,6 +5,7 @@ const list = document.querySelector("#task-list");
 const emptyTemplate = document.querySelector("#empty-template");
 const searchInput = document.querySelector("#search-input");
 const filterButtons = document.querySelectorAll(".filter-button");
+const tagFilter = document.querySelector("#tag-filter");
 const clearCompletedButton = document.querySelector("#clear-completed");
 const completeAllButton = document.querySelector("#complete-all");
 const dueDateInput = document.querySelector("#task-due-date");
@@ -21,6 +22,7 @@ const TOAST_VISIBLE_TIME = 6_000;
 
 let tasks = [];
 let activeFilter = "all";
+let activeTag = "";
 let query = "";
 let editingTaskId = null;
 const shownReminderKeys = new Set();
@@ -202,9 +204,47 @@ function getVisibleTasks() {
       return true;
     })
     .filter((task) => {
-      const searchableText = `${task.title} ${task.description ?? ""} ${task.startTime ?? ""}`;
+      if (!activeTag) {
+        return true;
+      }
+
+      return (task.tags ?? []).some(
+        (tag) => tag.toLowerCase() === activeTag,
+      );
+    })
+    .filter((task) => {
+      const searchableText = `${task.title} ${task.description ?? ""} ${task.startTime ?? ""} ${(task.tags ?? []).join(" ")}`;
       return searchableText.toLowerCase().includes(query);
     });
+}
+
+function renderTagFilter() {
+  const availableTags = [...new Map(
+    tasks
+      .flatMap((task) => task.tags ?? [])
+      .map((tag) => [tag.toLowerCase(), tag]),
+  ).values()].sort((firstTag, secondTag) =>
+    firstTag.localeCompare(secondTag),
+  );
+
+  if (activeTag && !availableTags.some((tag) => tag.toLowerCase() === activeTag)) {
+    activeTag = "";
+  }
+
+  tagFilter.replaceChildren();
+  const allTagsOption = document.createElement("option");
+  allTagsOption.value = "";
+  allTagsOption.textContent = "All tags";
+  tagFilter.append(allTagsOption);
+
+  availableTags.forEach((tag) => {
+    const option = document.createElement("option");
+    option.value = tag.toLowerCase();
+    option.textContent = tag;
+    tagFilter.append(option);
+  });
+
+  tagFilter.value = activeTag;
 }
 
 /**
@@ -263,6 +303,13 @@ function createTaskElement(task) {
 
   meta.append(prioritySpan, dueDateSpan, startTimeSpan);
 
+  (task.tags ?? []).forEach((tag) => {
+    const tagSpan = document.createElement("span");
+    tagSpan.className = "task-tag";
+    tagSpan.textContent = tag;
+    meta.append(tagSpan);
+  });
+
   const actions = document.createElement("div");
   actions.className = "task-actions";
 
@@ -296,6 +343,7 @@ function createTaskElement(task) {
 }
 
 function renderTasks() {
+  renderTagFilter();
   const visibleTasks = getVisibleTasks();
   list.replaceChildren();
 
@@ -318,6 +366,7 @@ async function saveTaskFromForm(formData) {
   const recurrenceInterval =
     Number(formData.get("recurrenceInterval") ?? 1) || 1;
   const recurrenceEndDate = formData.get("recurrenceEndDate") ?? "";
+  const tags = formData.get("tags") ?? "";
 
   if (isPastDate(dueDate)) {
     setDateError("Past dates are not allowed. Choose today or a future date.");
@@ -340,6 +389,7 @@ async function saveTaskFromForm(formData) {
     recurrenceType,
     recurrenceInterval,
     recurrenceEndDate,
+    tags,
   };
 
   if (editingTaskId) {
@@ -372,6 +422,7 @@ function editTask(taskId) {
   form.elements.recurrenceType.value = task.recurrenceType ?? "none";
   form.elements.recurrenceInterval.value = task.recurrenceInterval ?? 1;
   form.elements.recurrenceEndDate.value = task.recurrenceEndDate ?? "";
+  form.elements.tags.value = (task.tags ?? []).join(", ");
   submitButton.textContent = "Save Task";
   setDateError("");
   form.elements.title.focus();
@@ -411,6 +462,11 @@ filterButtons.forEach((button) => {
     });
     renderTasks();
   });
+});
+
+tagFilter.addEventListener("change", (event) => {
+  activeTag = event.target.value;
+  renderTasks();
 });
 
 list.addEventListener("change", async (event) => {

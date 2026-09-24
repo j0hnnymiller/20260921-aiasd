@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const {
   calculateNextOccurrenceDate,
   normalizeRecurrenceInput,
+  normalizeTags,
 } = require("../server.js");
 
 test("daily recurrence advances by one day", () => {
@@ -39,15 +40,16 @@ test("invalid recurrence metadata is normalized to safe defaults", () => {
 });
 
 test("invalid due dates do not generate recurring occurrences", () => {
-  assert.equal(
-    calculateNextOccurrenceDate("not-a-date", "daily", 1),
-    "",
-  );
+  assert.equal(calculateNextOccurrenceDate("not-a-date", "daily", 1), "");
 });
 
 test("invalid calendar due dates do not generate recurring occurrences", () => {
-  assert.equal(
-    calculateNextOccurrenceDate("2026-02-31", "daily", 1),
-    "",
+  assert.equal(calculateNextOccurrenceDate("2026-02-31", "daily", 1), "");
+});
+
+test("tags are normalized, deduplicated, and limited", () => {
+  assert.deepEqual(
+    normalizeTags("Work, home, work, , Errands"),
+    ["Work", "home", "Errands"],
   );
 });
