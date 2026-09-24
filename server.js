@@ -143,6 +143,28 @@ function dateToISO(date) {
   return `${year}-${month}-${day}`;
 }
 
+function createDateFromISO(dateValue) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return null;
+  }
+
+  const [yearText, monthText, dayText] = dateValue.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
 function calculateNextOccurrenceDate(dateValue, recurrenceType, interval) {
   if (!dateValue || recurrenceType === "none") {
     return dateValue || "";
@@ -153,7 +175,11 @@ function calculateNextOccurrenceDate(dateValue, recurrenceType, interval) {
       ? Math.max(1, Math.floor(Number(interval)))
       : 1;
 
-  const currentDate = new Date(`${dateValue}T00:00:00`);
+  const currentDate = createDateFromISO(dateValue);
+
+  if (!currentDate) {
+    return "";
+  }
 
   switch (recurrenceType) {
     case "daily":
@@ -405,7 +431,11 @@ app.put("/api/tasks/:id", (request, response) => {
 
   const updatedTask = normalizeTask(selectTask.get(request.params.id));
 
-  if (updatedTask.completed && updatedTask.recurrenceType !== "none") {
+  if (
+    !existingTask.completed &&
+    updatedTask.completed &&
+    updatedTask.recurrenceType !== "none"
+  ) {
     createNextRecurringOccurrence(updatedTask);
   }
 
@@ -423,7 +453,7 @@ app.post("/api/tasks/complete-all", (request, response) => {
   completeAllTasks.run();
 
   tasks.forEach((task) => {
-    if (task.recurrenceType !== "none") {
+    if (!task.completed && task.recurrenceType !== "none") {
       createNextRecurringOccurrence({ ...task, completed: true });
     }
   });
