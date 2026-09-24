@@ -44,3 +44,10 @@ test("invalid due dates do not generate recurring occurrences", () => {
     "",
   );
 });
+
+test("invalid calendar due dates do not generate recurring occurrences", () => {
+  assert.equal(
+    calculateNextOccurrenceDate("2026-02-31", "daily", 1),
+    "",
+  );
+});
