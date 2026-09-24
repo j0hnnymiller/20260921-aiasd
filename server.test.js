@@ -280,16 +280,16 @@ test("PUT /api/tasks/:id updates tasks and returns 404 for unknown IDs", async (
 
 test("startServer surfaces startup timeout diagnostics and cleans temporary state", async (t) => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-startup-failure-"));
+  const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-failure-data-"));
   const scriptPath = path.join(tempRoot, "hang.js");
-  const dataDirectory = path.join(tempRoot, "data");
   let childPid;
 
   t.after(async () => {
     await fs.rm(tempRoot, { recursive: true, force: true });
+    await fs.rm(dataDirectory, { recursive: true, force: true });
   });
 
   await fs.writeFile(scriptPath, "setInterval(() => {}, 1000);\n");
-  await fs.mkdir(dataDirectory, { recursive: true });
 
   await assert.rejects(
     startServer(t, {
