@@ -59,6 +59,7 @@ The server creates the `data` directory and `data/tasks.sqlite` automatically. S
 | Command         | Purpose                                                       |
 | --------------- | ------------------------------------------------------------- |
 | `npm start`     | Start the Express server on port 3000, or the port in `PORT`. |
+| `npm test`      | Run the isolated Node.js API integration tests.               |
 | `npm run check` | Validate the syntax of the server and browser JavaScript.     |
 
 ## API
@@ -93,8 +94,9 @@ See [docs/architecture.md](docs/architecture.md) for Mermaid diagrams covering t
 
 ## Validation
 
-Run the JavaScript syntax check after making changes:
+Run the test suite and JavaScript syntax check after making changes:
 
 ```powershell
+npm test
 npm run check
 ```
