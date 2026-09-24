@@ -15,37 +15,59 @@ async function stopServer(serverProcess) {
   await once(serverProcess, "exit");
 }
 
-async function startServer(t) {
-  const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-test-"));
-  const serverProcess = spawn("node", ["server.js"], {
+async function startServer(
+  t,
+  {
+    dataDirectory = null,
+    env = {},
+    onSpawn = null,
+    scriptPath = "server.js",
+    startupTimeoutMs = 10_000,
+  } = {},
+) {
+  const resolvedDataDirectory =
+    dataDirectory ?? await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-test-"));
+  const serverProcess = spawn("node", [scriptPath], {
     cwd: __dirname,
     env: {
       ...process.env,
       PORT: "0",
-      DATA_DIRECTORY: dataDirectory,
+      DATA_DIRECTORY: resolvedDataDirectory,
+      ...env,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
+  let cleanedUp = false;
 
   let output = "";
   let activePort;
 
   const cleanup = async () => {
+    if (cleanedUp) {
+      return;
+    }
+
+    cleanedUp = true;
     await stopServer(serverProcess);
-    await fs.rm(dataDirectory, { recursive: true, force: true });
+    await fs.rm(resolvedDataDirectory, { recursive: true, force: true });
   };
 
   t.after(async () => {
     await cleanup();
   });
 
+  if (onSpawn) {
+    onSpawn(serverProcess);
+  }
+
   await new Promise((resolve, reject) => {
+    let settled = false;
+
     const timeout = setTimeout(() => {
-      clearListeners();
-      reject(
+      void finishFailure(
         new Error(`Server startup timed out. Output:\n${output || "<none>"}`),
       );
-    }, 10_000);
+    }, startupTimeoutMs);
 
     function clearListeners() {
       clearTimeout(timeout);
@@ -53,6 +75,28 @@ async function startServer(t) {
       serverProcess.stderr.off("data", onData);
       serverProcess.off("error", onError);
       serverProcess.off("exit", onExit);
+    }
+
+    async function finishFailure(error) {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearListeners();
+
+      try {
+        await cleanup();
+      } catch (cleanupError) {
+        reject(
+          new Error(
+            `${error.message}\nCleanup failed: ${cleanupError.message}`,
+          ),
+        );
+        return;
+      }
+
+      reject(error);
     }
 
     function onData(chunk) {
@@ -64,19 +108,18 @@ async function startServer(t) {
       }
 
       if (activePort) {
+        settled = true;
         clearListeners();
         resolve();
       }
     }
 
     function onError(error) {
-      clearListeners();
-      reject(error);
+      void finishFailure(error);
     }
 
     function onExit(code, signal) {
-      clearListeners();
-      reject(
+      void finishFailure(
         new Error(
           `Server exited before startup (code: ${code}, signal: ${signal}). Output:\n${output || "<none>"}`,
         ),
@@ -233,6 +276,40 @@ test("PUT /api/tasks/:id updates tasks and returns 404 for unknown IDs", async (
   assert.deepEqual(await missingTaskResponse.json(), {
     error: "Task not found",
   });
+});
+
+test("startServer surfaces startup timeout diagnostics and cleans temporary state", async (t) => {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-startup-failure-"));
+  const scriptPath = path.join(tempRoot, "hang.js");
+  const dataDirectory = path.join(tempRoot, "data");
+  let childPid;
+
+  t.after(async () => {
+    await fs.rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await fs.writeFile(scriptPath, "setInterval(() => {}, 1000);\n");
+  await fs.mkdir(dataDirectory, { recursive: true });
+
+  await assert.rejects(
+    startServer(t, {
+      dataDirectory,
+      onSpawn(serverProcess) {
+        childPid = serverProcess.pid;
+      },
+      scriptPath,
+      startupTimeoutMs: 50,
+    }),
+    /Server startup timed out/,
+  );
+
+  await assert.rejects(
+    fs.stat(dataDirectory),
+    (error) => error && error.code === "ENOENT",
+  );
+  assert.throws(() => {
+    process.kill(childPid, 0);
+  }, /ESRCH/);
 });
 
 test("POST /api/tasks/complete-all marks every task as completed", async (t) => {
