@@ -20,11 +20,13 @@ async function startServer(
   {
     dataDirectory = null,
     env = {},
+    onDataDirectory = null,
     onSpawn = null,
     scriptPath = "server.js",
     startupTimeoutMs = 10_000,
   } = {},
 ) {
+  const ownsDataDirectory = dataDirectory === null;
   const resolvedDataDirectory =
     dataDirectory ?? await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-test-"));
   const serverProcess = spawn("node", [scriptPath], {
@@ -39,6 +41,10 @@ async function startServer(
   });
   let cleanedUp = false;
 
+  if (onDataDirectory) {
+    onDataDirectory(resolvedDataDirectory);
+  }
+
   let output = "";
   let activePort;
 
@@ -49,7 +55,10 @@ async function startServer(
 
     cleanedUp = true;
     await stopServer(serverProcess);
-    await fs.rm(resolvedDataDirectory, { recursive: true, force: true });
+
+    if (ownsDataDirectory) {
+      await fs.rm(resolvedDataDirectory, { recursive: true, force: true });
+    }
   };
 
   t.after(async () => {
@@ -280,20 +289,21 @@ test("PUT /api/tasks/:id updates tasks and returns 404 for unknown IDs", async (
 
 test("startServer surfaces startup timeout diagnostics and cleans temporary state", async (t) => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-startup-failure-"));
-  const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-failure-data-"));
   const scriptPath = path.join(tempRoot, "hang.js");
+  let dataDirectory;
   let childPid;
 
   t.after(async () => {
     await fs.rm(tempRoot, { recursive: true, force: true });
-    await fs.rm(dataDirectory, { recursive: true, force: true });
   });
 
   await fs.writeFile(scriptPath, "setInterval(() => {}, 1000);\n");
 
   await assert.rejects(
     startServer(t, {
-      dataDirectory,
+      onDataDirectory(createdDataDirectory) {
+        dataDirectory = createdDataDirectory;
+      },
       onSpawn(serverProcess) {
         childPid = serverProcess.pid;
       },
