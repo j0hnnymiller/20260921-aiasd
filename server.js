@@ -405,7 +405,11 @@ app.put("/api/tasks/:id", (request, response) => {
 
   const updatedTask = normalizeTask(selectTask.get(request.params.id));
 
-  if (updatedTask.completed && updatedTask.recurrenceType !== "none") {
+  if (
+    !existingTask.completed &&
+    updatedTask.completed &&
+    updatedTask.recurrenceType !== "none"
+  ) {
     createNextRecurringOccurrence(updatedTask);
   }
 
