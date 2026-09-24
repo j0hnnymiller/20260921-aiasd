@@ -17,6 +17,8 @@ Create a set of issue files documenting each testing-related finding discovered 
 - issues/issue-02-no-startup-failure-path-tests.md - missing startup and cleanup test coverage
 - issues/issue-03-no-coverage-gate.md - missing 80% threshold enforcement
 - issues/issue-04-no-end-to-end-api-validation.md - missing API integration validation
+- issues/issue-05-categories-tags.md - categories and tags feature issue
+- issues/issue-06-daily-agenda-view.md - daily agenda view feature issue
 
 ## Key decisions
 
