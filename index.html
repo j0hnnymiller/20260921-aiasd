@@ -87,6 +87,39 @@
               </label>
             </div>
 
+            <div class="form-row">
+              <label>
+                Repeat
+                <select name="recurrenceType" aria-label="Recurrence type">
+                  <option value="none">None</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </label>
+              <label>
+                Every
+                <input
+                  name="recurrenceInterval"
+                  type="number"
+                  min="1"
+                  max="90"
+                  step="1"
+                  value="1"
+                  aria-label="Recurrence interval"
+                />
+              </label>
+            </div>
+
+            <label>
+              Repeat until
+              <input
+                name="recurrenceEndDate"
+                type="date"
+                aria-label="Recurrence end date"
+              />
+            </label>
+
             <p id="date-error" class="form-message" aria-live="polite"></p>
 
             <button type="submit" class="primary-action">Add Task</button>

@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check js/app.js"
+    "check": "node --check server.js && node --check js/app.js",
+    "test": "node --test"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

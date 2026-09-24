@@ -314,6 +314,10 @@ async function saveTaskFromForm(formData) {
   const dueDate = formData.get("dueDate");
   const startTime = formData.get("startTime");
   const priority = formData.get("priority");
+  const recurrenceType = formData.get("recurrenceType") ?? "none";
+  const recurrenceInterval =
+    Number(formData.get("recurrenceInterval") ?? 1) || 1;
+  const recurrenceEndDate = formData.get("recurrenceEndDate") ?? "";
 
   if (isPastDate(dueDate)) {
     setDateError("Past dates are not allowed. Choose today or a future date.");
@@ -327,25 +331,26 @@ async function saveTaskFromForm(formData) {
 
   setDateError("");
 
+  const taskPayload = {
+    title,
+    description,
+    priority,
+    dueDate,
+    startTime,
+    recurrenceType,
+    recurrenceInterval,
+    recurrenceEndDate,
+  };
+
   if (editingTaskId) {
-    await saveTask(editingTaskId, {
-      title,
-      description,
-      priority,
-      dueDate,
-      startTime,
-    });
+    await saveTask(editingTaskId, taskPayload);
     editingTaskId = null;
     submitButton.textContent = "Add Task";
     return true;
   }
 
   await createTask({
-    title,
-    description,
-    priority,
-    dueDate,
-    startTime,
+    ...taskPayload,
     completed: false,
   });
   return true;
@@ -364,6 +369,9 @@ function editTask(taskId) {
   form.elements.priority.value = task.priority;
   form.elements.dueDate.value = task.dueDate ?? "";
   form.elements.startTime.value = task.startTime ?? "";
+  form.elements.recurrenceType.value = task.recurrenceType ?? "none";
+  form.elements.recurrenceInterval.value = task.recurrenceInterval ?? 1;
+  form.elements.recurrenceEndDate.value = task.recurrenceEndDate ?? "";
   submitButton.textContent = "Save Task";
   setDateError("");
   form.elements.title.focus();
@@ -378,6 +386,8 @@ form.addEventListener("submit", async (event) => {
   }
 
   form.reset();
+  form.elements.recurrenceType.value = "none";
+  form.elements.recurrenceInterval.value = 1;
   editingTaskId = null;
   submitButton.textContent = "Add Task";
   form.elements.title.focus();
