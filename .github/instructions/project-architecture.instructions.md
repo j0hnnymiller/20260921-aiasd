@@ -39,6 +39,9 @@ Use these rules when adding features, refactoring components, or creating new fi
 - Put shared logic in clearly named modules rather than duplicating behavior across the codebase.
 - Keep startup configuration, route setup, and database initialization in obvious, dedicated areas.
 - Preserve the project’s existing runtime boundaries: browser code should not own the database directly, and server code should not contain UI-only logic.
+- Validate malformed user input before persistence or recurrence calculation. Reject invalid dates rather than letting `NaN` values reach the API layer or database.
+- Guard state transitions and idempotency for recurring or bulk completion flows. Only create a next occurrence when a task changes from incomplete to complete; do not create duplicates on repeated saves or complete-all calls.
+- Keep database initialization injectable or test-scoped so tests do not touch the shared repository database during startup.
 - Prefer readable orchestration over clever abstractions when the codebase is small and explicit.
 - Before adding a new layer, confirm it reduces complexity rather than introducing it.
 

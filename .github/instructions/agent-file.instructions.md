@@ -40,6 +40,13 @@ Create specialized GitHub Copilot agents with domain expertise.
 # Style: <Communication style>
 ```
 
+### Required review guardrails
+
+- Every custom agent file must include all four header fields before it is considered complete.
+- Implementation-focused agents must include a validation section that names the checks required to prove correctness.
+- For code-generation tasks, require explicit validation for malformed input, state transitions, idempotency, and test isolation.
+- Custom agents intended for user-facing or repository guidance must also document discoverability, such as a README entry or a documented entry point.
+
 ### Core Sections
 
 1. Mission Statement (required)
