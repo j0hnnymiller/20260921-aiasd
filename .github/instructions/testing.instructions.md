@@ -32,9 +32,12 @@ nextReview: "2026-12-23"
 
 Use these rules for unit, integration, and automation tests in this repository.
 
+This repository requires a minimum test coverage of 80% for all tracked application code and critical paths. Coverage must be measured with the project’s standard test command and should be treated as a release gate for changes to runtime behavior.
+
 ## Rules
 
 - Prefer explicit assertions over indirect coverage. A test must directly exercise the behavior it claims to validate.
+- Maintain a minimum test coverage threshold of 80% across tracked application code. New or modified behavior should not reduce coverage below this baseline.
 - When waiting for server startup, accumulate stdout and stderr before checking for readiness markers. Do not assume a log line arrives in a single chunk.
 - Treat startup timeout as a failure path that requires cleanup, not as a successful test outcome.
 - Always tear down spawned child processes, temporary directories, ports, and other state in `finally` or equivalent cleanup blocks.
@@ -99,5 +102,6 @@ try {
 - [ ] Cleanup runs in all failure paths.
 - [ ] Child processes are terminated when the test ends.
 - [ ] Temporary data is isolated from shared repository state.
+- [ ] Minimum coverage remains at or above 80% for tracked application code.
 - [ ] The test fails with actionable diagnostics instead of hanging silently.
 - [ ] No temporary data or process leaks remain after a failed run.

@@ -96,6 +96,22 @@ docs/        Architecture documentation and Mermaid diagrams
 
 - [stage-and-commit-change](.github/skills/stage-and-commit-change/SKILL.md) - Stage and commit workspace changes in logical, reviewable groups while preserving unrelated work.
 
+## Custom instruction files
+
+- [nodejs](.github/instructions/nodejs.instructions.md) - Node.js runtime and application guidance.
+- [express](.github/instructions/express.instructions.md) - Express API and server patterns.
+- [sqlite](.github/instructions/sqlite.instructions.md) - SQLite schema and query safety.
+- [javascript](.github/instructions/javascript.instructions.md) - JavaScript conventions and async handling.
+- [fetch](.github/instructions/fetch.instructions.md) - Fetch API usage and error handling.
+- [dom](.github/instructions/dom.instructions.md) - DOM manipulation and accessibility guidance.
+- [node-test](.github/instructions/node-test.instructions.md) - Node.js built-in test runner patterns.
+- [markdown](.github/instructions/markdown.instructions.md) - Documentation structure and Markdown quality.
+- [mermaid](.github/instructions/mermaid.instructions.md) - Mermaid architecture and flow diagrams.
+- [security](.github/instructions/security.instructions.md) - Secure input handling, secret hygiene, and safe defaults.
+- [github-issues](.github/instructions/github-issues.instructions.md) - GitHub Issues search, triage, update, and closure guidance.
+- [project-architecture](.github/instructions/project-architecture.instructions.md) - Clear project boundaries and maintainable architecture.
+- [api-contract](.github/instructions/api-contract.instructions.md) - JSON API contract consistency between server and browser.
+
 ## Architecture
 
 See [docs/architecture.md](docs/architecture.md) for Mermaid diagrams covering the runtime topology, request and persistence flow, application layers, and task data model.
