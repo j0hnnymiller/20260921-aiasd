@@ -430,8 +430,7 @@ app.post("/api/tasks/complete-all", (request, response) => {
 
   completeAllTasks.run();
 
-  tasks.forEach((task) => {
-    if (task.recurrenceType !== "none") {
+    if (!task.completed && task.recurrenceType !== "none") {
       createNextRecurringOccurrence({ ...task, completed: true });
     }
   });
