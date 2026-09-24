@@ -41,10 +41,19 @@ async function startServer(t) {
 
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
+      clearListeners();
       reject(
         new Error(`Server startup timed out. Output:\n${output || "<none>"}`),
       );
     }, 10_000);
+
+    function clearListeners() {
+      clearTimeout(timeout);
+      serverProcess.stdout.off("data", onData);
+      serverProcess.stderr.off("data", onData);
+      serverProcess.off("error", onError);
+      serverProcess.off("exit", onExit);
+    }
 
     function onData(chunk) {
       output += chunk.toString();
@@ -55,22 +64,18 @@ async function startServer(t) {
       }
 
       if (activePort) {
-        clearTimeout(timeout);
-        serverProcess.stdout.off("data", onData);
-        serverProcess.stderr.off("data", onData);
-        serverProcess.off("error", onError);
-        serverProcess.off("exit", onExit);
+        clearListeners();
         resolve();
       }
     }
 
     function onError(error) {
-      clearTimeout(timeout);
+      clearListeners();
       reject(error);
     }
 
     function onExit(code, signal) {
-      clearTimeout(timeout);
+      clearListeners();
       reject(
         new Error(
           `Server exited before startup (code: ${code}, signal: ${signal}). Output:\n${output || "<none>"}`,
@@ -230,13 +235,13 @@ test("PUT /api/tasks/:id updates tasks and returns 404 for unknown IDs", async (
   });
 });
 
-test("bulk completion, completed deletion, and item deletion update persisted state", async (t) => {
+test("POST /api/tasks/complete-all marks every task as completed", async (t) => {
   const { request } = await startServer(t);
-  const firstTask = await createTask(request, {
+  await createTask(request, {
     title: "First task",
     completed: false,
   });
-  const secondTask = await createTask(request, {
+  await createTask(request, {
     title: "Second task",
     completed: false,
   });
@@ -249,6 +254,18 @@ test("bulk completion, completed deletion, and item deletion update persisted st
   const completedTasks = await completeAllResponse.json();
   assert.equal(completedTasks.length, 2);
   assert.ok(completedTasks.every((task) => task.completed));
+});
+
+test("DELETE /api/tasks/completed removes completed tasks only", async (t) => {
+  const { request } = await startServer(t);
+  const completedTask = await createTask(request, {
+    title: "Completed task",
+    completed: true,
+  });
+  const openTask = await createTask(request, {
+    title: "Open task",
+    completed: false,
+  });
 
   const clearCompletedResponse = await request("/api/tasks/completed", {
     method: "DELETE",
@@ -256,13 +273,18 @@ test("bulk completion, completed deletion, and item deletion update persisted st
   assert.equal(clearCompletedResponse.status, 204);
 
   const listAfterClear = await request("/api/tasks");
-  assert.deepEqual(await listAfterClear.json(), []);
+  assert.deepEqual(await listAfterClear.json(), [openTask]);
 
-  const recreatedTask = await createTask(request, {
+  assert.notEqual(completedTask.id, openTask.id);
+});
+
+test("DELETE /api/tasks/:id removes the targeted task", async (t) => {
+  const { request } = await startServer(t);
+  const task = await createTask(request, {
     title: "Delete me",
     completed: false,
   });
-  const deleteResponse = await request(`/api/tasks/${recreatedTask.id}`, {
+  const deleteResponse = await request(`/api/tasks/${task.id}`, {
     method: "DELETE",
   });
 
@@ -270,6 +292,4 @@ test("bulk completion, completed deletion, and item deletion update persisted st
 
   const listAfterDelete = await request("/api/tasks");
   assert.deepEqual(await listAfterDelete.json(), []);
-
-  assert.notEqual(firstTask.id, secondTask.id);
 });
