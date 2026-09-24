@@ -120,6 +120,18 @@
               />
             </label>
 
+            <label for="task-tags">
+              Tags
+              <input
+                id="task-tags"
+                name="tags"
+                type="text"
+                maxlength="200"
+                placeholder="work, home, errands"
+                aria-label="Tags (comma-separated)"
+              />
+            </label>
+
             <p id="date-error" class="form-message" aria-live="polite"></p>
 
             <button type="submit" class="primary-action">Add Task</button>
@@ -167,6 +179,13 @@
                 Done
               </button>
             </div>
+
+            <label class="tag-filter-wrap">
+              <span class="sr-only">Filter by tag</span>
+              <select id="tag-filter" aria-label="Filter by tag">
+                <option value="">All tags</option>
+              </select>
+            </label>
           </div>
 
           <div class="bulk-actions" aria-label="Bulk actions">
