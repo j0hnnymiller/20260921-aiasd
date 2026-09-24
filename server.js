@@ -6,7 +6,7 @@ const Database = require("better-sqlite3");
 const express = require("express");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const requestedPort = process.env.PORT ?? 3000;
 const dataDirectory = process.env.DATA_DIRECTORY
   ? path.resolve(process.env.DATA_DIRECTORY)
   : path.join(__dirname, "data");
@@ -203,7 +203,10 @@ app.delete("/api/tasks/:id", (request, response) => {
   response.sendStatus(204);
 });
 
-app.listen(port, () => {
-  console.log(`Todo List Manager running at http://localhost:${port}`);
+const server = app.listen(requestedPort, () => {
+  const address = server.address();
+  const activePort = typeof address === "object" && address ? address.port : requestedPort;
+
+  console.log(`Todo List Manager running at http://localhost:${activePort}`);
   console.log(`SQLite database: ${databasePath}`);
 });

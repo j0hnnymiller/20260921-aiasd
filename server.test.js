@@ -4,32 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { test } = require("node:test");
 const { once } = require("node:events");
-const { createServer } = require("node:net");
 const { spawn } = require("node:child_process");
-
-async function getAvailablePort() {
-  const probeServer = createServer();
-
-  await new Promise((resolve, reject) => {
-    probeServer.once("error", reject);
-    probeServer.listen(0, "127.0.0.1", resolve);
-  });
-
-  const { port } = probeServer.address();
-
-  await new Promise((resolve, reject) => {
-    probeServer.close((error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      resolve();
-    });
-  });
-
-  return port;
-}
 
 async function stopServer(serverProcess) {
   if (serverProcess.killed || serverProcess.exitCode !== null) {
@@ -41,19 +16,19 @@ async function stopServer(serverProcess) {
 }
 
 async function startServer(t) {
-  const port = await getAvailablePort();
   const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "todo-api-test-"));
   const serverProcess = spawn("node", ["server.js"], {
     cwd: __dirname,
     env: {
       ...process.env,
-      PORT: String(port),
+      PORT: "0",
       DATA_DIRECTORY: dataDirectory,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
   let output = "";
+  let activePort;
 
   const cleanup = async () => {
     await stopServer(serverProcess);
@@ -65,7 +40,6 @@ async function startServer(t) {
   });
 
   await new Promise((resolve, reject) => {
-    const readinessMarker = `http://localhost:${port}`;
     const timeout = setTimeout(() => {
       reject(
         new Error(`Server startup timed out. Output:\n${output || "<none>"}`),
@@ -74,8 +48,13 @@ async function startServer(t) {
 
     function onData(chunk) {
       output += chunk.toString();
+      const portMatch = output.match(/http:\/\/localhost:(\d+)/);
 
-      if (output.includes(readinessMarker)) {
+      if (portMatch) {
+        activePort = Number(portMatch[1]);
+      }
+
+      if (activePort) {
         clearTimeout(timeout);
         serverProcess.stdout.off("data", onData);
         serverProcess.stderr.off("data", onData);
@@ -107,7 +86,7 @@ async function startServer(t) {
 
   return {
     request(pathname, options) {
-      return fetch(`http://127.0.0.1:${port}${pathname}`, options);
+      return fetch(`http://127.0.0.1:${activePort}${pathname}`, options);
     },
   };
 }
