@@ -38,10 +38,14 @@ This repository requires a minimum test coverage of 80% for all tracked applicat
 
 - Prefer explicit assertions over indirect coverage. A test must directly exercise the behavior it claims to validate.
 - Maintain a minimum test coverage threshold of 80% across tracked application code. New or modified behavior should not reduce coverage below this baseline.
+- Validate every external date, due date, and recurrence input before converting it to a `Date` or generating schedule data. Reject malformed values instead of allowing `NaN` output to reach persistence or display logic.
+- Treat recurring-task completion as a state transition, not a generic save event. A child occurrence should only be created when an item changes from incomplete to complete, and not on every subsequent edit of an already-completed task.
+- Only generate new occurrences for incomplete tasks in the pre-update snapshot when completing a recurring task in bulk. Prevent duplicate next-occurrence creation when the same task is processed repeatedly.
 - When waiting for server startup, accumulate stdout and stderr before checking for readiness markers. Do not assume a log line arrives in a single chunk.
 - Treat startup timeout as a failure path that requires cleanup, not as a successful test outcome.
 - Always tear down spawned child processes, temporary directories, ports, and other state in `finally` or equivalent cleanup blocks.
 - Isolate tests using unique temporary data locations. Do not write to shared default data folders unless the test explicitly verifies production state.
+- Prefer injectable or per-test database paths over importing server modules that mutate the shared repository database during test startup.
 - Fail fast with clear diagnostics when startup, setup, or teardown fails.
 - Ensure tests are deterministic: avoid race conditions, time-sensitive assumptions, and shared mutable state.
 - Clean up on every code path, including setup failure, timeout, and assertion failure.

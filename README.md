@@ -91,6 +91,7 @@ docs/        Architecture documentation and Mermaid diagrams
 ## Custom agents
 
 - [product-owner.agent.md](.github/agents/product-owner.agent.md) - Product framing, backlog prioritization, user-story drafting, and acceptance-criteria guidance for feature decisions.
+- [senior-developer.agent.md](.github/agents/senior-developer.agent.md) - Code quality and technical review, architecture guidance, implementation planning, debugging support, and delivery guidance.
 
 ## Custom skills
 

@@ -37,3 +37,17 @@ test("invalid recurrence metadata is normalized to safe defaults", () => {
   assert.equal(normalized.recurrenceInterval, 1);
   assert.equal(normalized.recurrenceEndDate, "");
 });
+
+test("invalid due dates do not generate recurring occurrences", () => {
+  assert.equal(
+    calculateNextOccurrenceDate("not-a-date", "daily", 1),
+    "",
+  );
+});
+
+test("invalid calendar due dates do not generate recurring occurrences", () => {
+  assert.equal(
+    calculateNextOccurrenceDate("2026-02-31", "daily", 1),
+    "",
+  );
+});
