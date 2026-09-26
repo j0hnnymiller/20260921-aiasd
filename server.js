@@ -7,7 +7,8 @@ const express = require("express");
 
 const app = express();
 const port = process.env.PORT || 3000;
-const dataDirectory = path.join(__dirname, "data");
+const dataDirectory =
+  process.env.DATA_DIRECTORY || path.join(__dirname, "data");
 const databasePath = path.join(dataDirectory, "tasks.sqlite");
 
 const VALID_RECURRENCE_TYPES = new Set(["none", "daily", "weekly", "monthly"]);
